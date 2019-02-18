@@ -44,14 +44,34 @@ int main( void )
 		return -1;
 	}
 
+    GLuint VertexArrayID;
+    glGenVertexArrays(1, &VertexArrayID);
+    glBindVertexArray(VertexArrayID);
+
+    GLfloat g_vertex_buffer_data[] = {
+        -1.0f, -1.0f, 0.0f,
+         1.0f, -1.0f, 0.0f,
+         0.0f,  1.0f, 0.0f
+    };
+
 	// Ensure we can capture the escape key being pressed below
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
 	// Dark blue background
 	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
 
+    GLuint vertexbuffer;
+    glGenBuffers(1, &vertexbuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+    
 	do{
-		glClear(GL_COLOR_BUFFER_BIT);
+        glEnableVertexAttibArray(0);
+        glBineBuffer(GL_ARRAY_BFFER, vertexbuffer);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALS, 0, (void*)0);
+
+        glDrawArrays(GL_TRIAGLES, 0, 3);
+        glDisableVertexAttribrray(0);
 
 		// Draw nothing, see you in tutorial 2 !
 
