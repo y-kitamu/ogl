@@ -513,14 +513,17 @@ set_target_properties(tutorial17_rotations PROPERTIES XCODE_ATTRIBUTE_CONFIGURAT
 create_target_launcher(tutorial17_rotations WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tutorial17_rotations/")
 
 # User playground
-add_executable(playground 
-	playground/playground.cpp
-	common/shader.cpp
-	common/shader.hpp
-)
-target_link_libraries(playground
-	${ALL_LIBS}
-)
+file(GLOB playgrounds playground/playground*.cpp)
+
+foreach(pg IN LISTS playgrounds)
+  get_filename_component(basename ${pg} NAME_WE)
+  add_executable(${basename}
+    ${pg}
+    common/shader.cpp
+    common/shader.hpp)
+  target_link_libraries(${basename} ${ALL_LIBS})
+endforeach()
+
 # Xcode and Visual working directories
 set_target_properties(playground PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/playground/")
 create_target_launcher(playground WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/playground/")

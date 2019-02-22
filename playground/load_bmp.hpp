@@ -12,48 +12,134 @@
 #include <GLFW/glfw3.h>
 
 
-GLuint loadBMP_custom(const char * imagepath) {
-    char header[54]; // BMP ファイルのヘッダーは54byte
-    unsigned int dataPos;
-    unsigned int width, height, imageSize;
+GLuint loadBMP_custom(const char * imagepath){
 
-    char * data;
+	printf("Reading image %s\n", imagepath);
 
-    // ファイルを開いてチェック
-    std::ifstream ifs(imagepath);
+	// Data read from the header of the BMP file
+	unsigned char header[54];
+	unsigned int dataPos;
+	unsigned int imageSize;
+	unsigned int width, height;
+	// Actual RGB data
+	unsigned char * data;
 
-    if (!ifs.read(header, 54)) {
-        std::cout << "Not a BMP file." << std::endl;
-    }
+	// Open the file
+	FILE * file = fopen(imagepath,"rb");
+	if (!file){
+		printf("%s could not be opened. Are you in the right directory ? Don't forget to read the FAQ !\n", imagepath);
+		getchar();
+		return 0;
+	}
 
-    if (header[0] != 'B' || header[1] != 'M') {
-        std::cout << "Not a BMP file." << std::endl;;
-        return 0;
-    }
+	// Read the header, i.e. the 54 first bytes
 
-    // ヘッダーから情報取得
-    dataPos = *(int*)&(header[0x0A]);
-    imageSize = *(int*)&(header[0x22]);
-    width = *(int*)&(header[0x12]);
-    height = *(int*)&(header[0x16]);
+	// If less than 54 bytes are read, problem
+	if ( fread(header, 1, 54, file)!=54 ){ 
+		printf("Not a correct BMP file\n");
+		fclose(file);
+		return 0;
+	}
+	// A BMP files always begins with "BM"
+	if ( header[0]!='B' || header[1]!='M' ){
+		printf("Not a correct BMP file\n");
+		fclose(file);
+		return 0;
+	}
+	// Make sure this is a 24bpp file
+	if ( *(int*)&(header[0x1E])!=0  )         {printf("Not a correct BMP file\n");    fclose(file); return 0;}
+	if ( *(int*)&(header[0x1C])!=24 )         {printf("Not a correct BMP file\n");    fclose(file); return 0;}
 
-    // BMPファイルがミスフォーマットの場合、その情報を推測
-    if (!imageSize) imageSize = width * height * 3;
-    if (dataPos = 0) dataPos = 54;
+	// Read the information about the image
+	dataPos    = *(int*)&(header[0x0A]);
+	imageSize  = *(int*)&(header[0x22]);
+	width      = *(int*)&(header[0x12]);
+	height     = *(int*)&(header[0x16]);
 
-    // データの読み込み
-    data = new char[imageSize];
-    ifs.read(data, imageSize);
-    ifs.close();
+	// Some BMP files are misformatted, guess missing information
+	if (imageSize==0)    imageSize=width*height*3; // 3 : one byte for each Red, Green and Blue component
+	if (dataPos==0)      dataPos=54; // The BMP header is done that way
 
-    GLuint textureID;
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, data);
+	// Create a buffer
+	data = new unsigned char [imageSize];
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	// Read the actual data from the file into the buffer
+	fread(data,1,imageSize,file);
 
-    return textureID;
+	// Everything is in memory now, the file can be closed.
+	fclose (file);
+
+	// Create one OpenGL texture
+	GLuint textureID;
+	glGenTextures(1, &textureID);
+	
+	// "Bind" the newly created texture : all future texture functions will modify this texture
+	glBindTexture(GL_TEXTURE_2D, textureID);
+
+	// Give the image to OpenGL
+	glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, data);
+
+	// OpenGL has now copied the data. Free our own version
+	delete [] data;
+
+	// Poor filtering, or ...
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); 
+
+	// ... nice trilinear filtering ...
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	// ... which requires mipmaps. Generate them automatically.
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	// Return the ID of the texture we just created
+	return textureID;
 }
+
+// GLuint loadBMP_custom(const char * imagepath) {
+//     char header[54]; // BMP ファイルのヘッダーは54byte
+//     unsigned int dataPos;
+//     unsigned int width, height, imageSize;
+
+//     char * data;
+
+//     // ファイルを開いてチェック
+//     std::ifstream ifs(imagepath);
+
+//     if (!ifs.read(header, 54)) {
+//         std::cout << "Not a BMP file." << std::endl;
+//     }
+
+//     if (header[0] != 'B' || header[1] != 'M') {
+//         std::cout << "Not a BMP file." << std::endl;;
+//         return 0;
+//     }
+
+//     // ヘッダーから情報取得
+//     dataPos = *(int*)&(header[0x0A]);
+//     imageSize = *(int*)&(header[0x22]);
+//     width = *(int*)&(header[0x12]);
+//     height = *(int*)&(header[0x16]);
+
+//     // BMPファイルがミスフォーマットの場合、その情報を推測
+//     if (!imageSize) imageSize = width * height * 3;
+//     if (dataPos = 0) dataPos = 54;
+
+//     // データの読み込み
+//     data = new char[imageSize];
+//     ifs.read(data, imageSize);
+//     ifs.close();
+
+//     GLuint textureID;
+//     glGenTextures(1, &textureID);
+//     glBindTexture(GL_TEXTURE_2D, textureID);
+//     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, data);
+
+//     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+//     return textureID;
+// }
 
