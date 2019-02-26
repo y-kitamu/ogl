@@ -87,28 +87,6 @@ int main() {
 	// Get a handle for our "myTextureSampler" uniform
 	GLuint TextureID  = glGetUniformLocation(programID, "myTextureSampler");
 
-	// Our vertices. Tree consecutive floats give a 3D vertex; Three consecutive vertices give a triangle.
-	// A cube has 6 faces with 2 triangles each, so this makes 6*2=12 triangles, and 12*3 vertices
-	// static const GLfloat * g_vertex_buffer_data = getCubeVertexBufferData();
-	static const GLfloat g_vertex_buffer_data[] = {
-        -1.0f, -1.0f, 0.0f,
-        -1.0f, 1.0f, 0.0f,
-        1.0f, 1.0f, 0.0f,
-        1.0f, 1.0f, 0.0f,
-        -1.0f, -1.0f, 0.0f,
-        1.0f, -1.0f, 0.0f,
-    };
-    
-	// Two UV coordinatesfor each vertex. They were created with Blender.
-	static const GLfloat g_uv_buffer_data[] = {
-        -1.0f, -1.0f,
-		-1.0f, 1.0f,
-		1.0f, 1.0f, 
-		1.0f, 1.0f,
-		-1.0f, -1.0f,
-		1.0f, -1.0f,
-    }; //getCubeUVBufferData();
-    
 
 	GLuint vertexbuffer;
 	glGenBuffers(1, &vertexbuffer);
@@ -120,11 +98,11 @@ int main() {
 	glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
-    glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
-    glm::mat4 View = getViewMatrix();
-    glm::mat4 View0 = glm::lookAt(glm::vec3(0, 0, 3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+    // glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
+    // glm::mat4 View = getViewMatrix();
+    // glm::mat4 View0 = glm::lookAt(glm::vec3(4, 3, 2), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
     glm::mat4 Model = glm::mat4(1.0f);
-    glm::mat4 MVP = Projection * View0 * Model;
+    // glm::mat4 MVP = Projection * View0 * Model;
     
 	do {
 		// Clear the screen
@@ -135,8 +113,10 @@ int main() {
 
 		// Send our transformation to the currently bound shader, 
 		// in the "MVP" uniform
-        // computeMatrixFromInputs();
-        // glm::mat4 Projection = getProjectionMatrix();
+        computeMatrixFromInputs();
+        glm::mat4 Projection = getProjectionMatrix();
+        glm::mat4 View = getViewMatrix();
+        glm::mat4 MVP = Projection * View * Model;
 		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 
 		// Bind our texture in Texture Unit 0

@@ -2,8 +2,6 @@
 // Include GLFW
 #include <GLFW/glfw3.h>
 
-namespace {
-    // 
 	static const GLfloat g_vertex_buffer_data[] = { 
 		-1.0f,-1.0f,-1.0f,
 		-1.0f,-1.0f, 1.0f,
@@ -82,7 +80,3 @@ namespace {
 		1.000004f, 1.0f-0.671847f, 
 		0.667979f, 1.0f-0.335851f
 	};
-}
-
-const GLfloat * getCubeVertexBufferData() { return g_vertex_buffer_data; }
-const GLfloat * getCubeUVBufferData() {return g_uv_buffer_data; }
