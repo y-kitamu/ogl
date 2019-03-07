@@ -71,8 +71,8 @@ int main() {
 
 	// Create and compile our GLSL program from the shaders
     std::string dir = "/home/kitamura/work/opengl_sample/ogl/playground/";
-    std::string vert_shader = dir + "texture.vert";
-    std::string frag_shader = dir + "texture.frag";
+    std::string vert_shader = dir + "light_model.vert";
+    std::string frag_shader = dir + "light_model.frag";
 	GLuint programID = LoadShaders(vert_shader.c_str(), frag_shader.c_str());
 
     std::vector<glm::vec3> vertices, normals;
@@ -86,7 +86,11 @@ int main() {
     }
     
 	// Get a handle for our "MVP" uniform
-	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
+	GLuint MVPID = glGetUniformLocation(programID, "MVP");
+    GLuint VmatID = glGetUniformLocation(programID, "V");
+    GLuint MmatID = glGetUniformLocation(programID, "M");
+    GLuint MVID = glGetUniformLocation(programID, "MV");
+    GLuint LPosID = glGetUniformLocation(programID, "LightPosition_worldspace");
 
 	// Projection matrix : 45ｰ Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
 
@@ -116,6 +120,9 @@ int main() {
     glm::mat4 View = glm::lookAt(glm::vec3(4, 3, 2), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
     glm::mat4 Model = glm::mat4(1.0f);
     glm::mat4 MVP = Projection * View * Model;
+    glm::mat4 MV = View * Model;
+
+    glm::vec3 LightPosition = glm::vec3(4, 4, 4);
     
 	do {
 		// Clear the screen
@@ -126,7 +133,11 @@ int main() {
 
 		// Send our transformation to the currently bound shader, 
 		// in the "MVP" uniform
-		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+		glUniformMatrix4fv(MVPID, 1, GL_FALSE, &MVP[0][0]);
+        glUniformMatrix4fv(VmatID, 1, GL_FALSE, &View[0][0]);
+        glUniformMatrix4fv(MmatID, 1, GL_FALSE, &Model[0][0]);
+        glUniformMatrix4fv(MVID, 1, GL_FALSE, &MV[0][0]);
+        glUniform3fv(LPosID, 1, &LightPosition[0]);
 
 		// Bind our texture in Texture Unit 0
 		glActiveTexture(GL_TEXTURE0);
@@ -158,11 +169,23 @@ int main() {
 			(void*)0                          // array buffer offset
 		);
 
+        glEnableVertexAttribArray(2);
+        glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+        glVertexAttribPointer(
+            2,
+            3,
+            GL_FLOAT,
+            GL_FALSE,
+            0,
+            (void*)0
+        );
+
 		// Draw the triangle !
 		glDrawArrays(GL_TRIANGLES, 0, 12*3); // 12*3 indices starting at 0 -> 12 triangles
 
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
+        glDisableVertexAttribArray(2);
 
 		// Swap buffers
 		glfwSwapBuffers(window);
